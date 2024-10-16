@@ -1,101 +1,105 @@
-import Image from "next/image";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+"use client";
+
+import { changeStatus, createTodo, deleteTodo, getAllData, updateTitle } from "@/actions";
+import Button from "@/components/Button";
+import Input from "@/components/Input";
+import { ITodo } from "@/types/types";
+import { createRef, useEffect, useRef, useState } from "react";
+import { FaCheck, FaTrash } from "react-icons/fa";
+import { FaPencil } from "react-icons/fa6";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [addTodoVal, setAddTodoVal] = useState('')
+  const [isLoading, setIsLoading] = useState(true)
+  const [list, setList] = useState<ITodo[]>([]);
+  const inputRefs = useRef(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const getTodo = () => {
+    getAllData().then((res) => {
+      const result = res.map(todo => ({
+        ...todo,
+        isEditing: false,
+        editingValue: '',
+      }))
+      // inputRefs.current = result.reduce((acc, item) => ({ ...acc, [item.id]: createRef() }), [])
+      setList(result);
+    }).finally(() => {
+      setIsLoading(false)
+    })
+  }
+
+  const onAddTodo = async (value: string) => {
+    // setIsLoading(true);
+    await createTodo({ title: value })
+    setAddTodoVal('')
+    getTodo()
+  }
+
+  const onChangeStatus = (item: ITodo) => {
+    changeStatus({ id: item.id })
+    getTodo()
+  }
+
+  const onDelete = (item: ITodo) => {
+    deleteTodo({ id: item.id })
+    getTodo()
+  }
+
+  const onEditClick = (item: ITodo, idx: number) => {
+    setList(list.map((todo) => todo.id === item.id ? { ...todo, isEditing: true } : todo))
+    // if (inputRefs.current[idx].current) {
+    //     inputRefs.current[idx].current?.focus()
+    //   }
+  }
+
+  const onEditChange = (value: string, id: string) => {
+    setList(list.map((todo) => todo.id === id ? { ...todo, editingValue: value } : todo))
+  }
+
+  const onUpdateTitle = (id: string, value: string) => {
+    updateTitle({ id, value })
+    getTodo()
+    setList(list.map((todo) => todo.id === id ? { ...todo, isEditing: false, editingValue: value } : todo))
+  }
+
+  useEffect(() => {
+    getTodo()
+  }, [])
+
+
+  return (
+    <div className="w-screen h-screen text-center justify-center bg-gray-100 text-gray-700 pt-40">
+      {/* Header */}
+      <span className="text-lg">Todo App</span>
+      <div className="text-sm">
+        {/* Add todo */}
+        <div className="flex justify-center">
+          <div className="flex w-max">
+            <Input type="text" name="add-todo" value={addTodoVal} onChange={(e) => setAddTodoVal(e.target.value)} placeHolder="Add todo" InputClass="h-8" />
+            <Button text="Add" onClick={() => onAddTodo(addTodoVal)} buttonClass="h-8 w-20 bg-gray-600 text-white my-2 p-2" />
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        {/* Map todo */}
+        {isLoading ? (
+          <span>Loading...</span>
+        ) : (
+          <div className="flex flex-col mt-2">
+            <div className="w-1/2 self-center text-left">
+              {list.map((i: ITodo, idx) => (
+                <div key={i.id} className=" flex gap-2 justify-center items-center w-full">
+                  <Button text={<FaCheck />} onClick={() => onChangeStatus(i)} buttonClass={`${i.isCompleted ? 'bg-green-500 text-gray-700' : 'bg-gray-600 text-white'} p-0.5 px-1 m-1 w-6 h-6`} />
+                  <div className={`w-32 ${i.isCompleted ? 'line-through' : ''}`}>{i.title}</div>
+                  <Button text={<FaPencil />} onClick={() => onEditClick(i, idx)} buttonClass='bg-gray-600 text-white p-0.5 px-1 m-1 w-6 h-6' />
+                  {/* ref={(i) => (inputRefs.current[i.id] = i)} */}
+                  <Input type="text" name="add-todo" value={i.editingValue || ''} onChange={(e) => onEditChange(e.target.value, i.id)} placeHolder="New Title" InputClass="w-32" onBlur={(e) => onUpdateTitle(i.id, e.target.value)} disabled={!i.isEditing} />
+                  <Button text={<FaTrash />} onClick={() => onDelete(i)} buttonClass='bg-red-500 text-white p-0.5 px-1 m-1 w-6 h-6' />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
